@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-const MongoClient = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
 
 let database;
 
@@ -11,17 +11,25 @@ const initDb = (callback) => {
         return callback(null, database);
     }
 
-    MongoClient.connect(process.env.MONGODB_URI)
-        .then ((client) => {
-            database = client;
-        callback(null, database);
+    const connectionString = process.env.MONGODB_URI;
+
+    if (!connectionString || !connectionString.startsWith('mongodb')) {
+        return callback(new Error('MONGODB_URI is missing or invalid.'));
+    }
+
+    MongoClient.connect(connectionString)
+        .then((client) => {
+            database = client.db(); 
+            console.log('Database connected successfully!');
+            callback(null, database);
         })
         .catch((err) => {
+            console.error('Database connection failed:', err);
             callback(err);
         });
 };
 
-const getdatabase = () => {
+const getDatabase = () => {
     if (!database) {
         throw new Error('Database not initialized!');
     }
@@ -30,5 +38,5 @@ const getdatabase = () => {
 
 module.exports = {
     initDb,
-    getdatabase,
+    getDatabase,
 };
